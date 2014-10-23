@@ -161,10 +161,19 @@ var scp_prep = function() {
         }
     });
 
+//modificación para hacer que el campo serie sea obligatorio
     $('form#save, form:has(table.list)').submit(function() {
-        $(window).unbind('beforeunload');
+		$(window).unbind('beforeunload');
+		e.preventDefault();
         $('#overlay, #loading').show();
-        return true;
+		_serie=$("#9c7ed10883ffcdbc");
+		serie=_serie.val();
+		if(serie>5){
+			return true;
+		}else{
+			$("#overlay, #loading").hide();
+			alert("Campo serie no se ha llenado");
+		}
      });
 
     $('select#tpl_options').change(function() {

@@ -285,10 +285,10 @@ if ($results) {
         count(DISTINCT thread.id) as thread_count,
         count(DISTINCT collab.id) as collaborators
         FROM '.TICKET_TABLE.' ticket
+		LEFT JOIN 
         LEFT JOIN '.TICKET_ATTACHMENT_TABLE.' attach ON (ticket.ticket_id=attach.ticket_id) '
      .' LEFT JOIN '.TICKET_THREAD_TABLE.' thread ON ( ticket.ticket_id=thread.ticket_id) '
-     .' LEFT JOIN '.TICKET_COLLABORATOR_TABLE.' collab
-            ON ( ticket.ticket_id=collab.ticket_id) '
+     .' LEFT JOIN '.TICKET_COLLABORATOR_TABLE.' collab ON ( ticket.ticket_id=collab.ticket_id) '
      .' WHERE ticket.ticket_id IN ('.implode(',', db_input(array_keys($results))).')
         GROUP BY ticket.ticket_id';
     $ids_res = db_query($counts_sql);
@@ -339,9 +339,10 @@ if ($results) {
 	        <th width="280">
                  <a <?php echo $subj_sort; ?> href="tickets.php?sort=subj&order=<?php echo $negorder; ?><?php echo $qstr; ?>"
                     title="Sort By Subject <?php echo $negorder; ?>">Asunto</a></th>
-            <!--<th width="280">
-                 <a <?php //echo $subj_sort; ?> href="tickets.php?sort=serie&order=<?php //echo $negorder; ?><?php //echo $qstr; ?>"
-                    title="Sort By Subject <?php //echo $negorder; ?>">Serie</a></th>-->
+<?php //aquí está el header para poner la serie ?>
+            <th width="280">
+                 <a <?php echo $subj_sort; ?> href="tickets.php?sort=serie&order=<?php echo $negorder; ?><?php echo $qstr; ?>"
+                    title="Sort By Subject <?php echo $negorder; ?>">Serie</a></th>
             <th width="170">
                 <a <?php echo $name_sort; ?> href="tickets.php?sort=name&order=<?php echo $negorder; ?><?php echo $qstr; ?>"
                      title="Sort By Name <?php echo $negorder; ?>">De</a></th>
@@ -384,7 +385,12 @@ if ($results) {
         $class = "row1";
         $total=0;
         if($res && ($num=count($results))):
-            //var_dump($results);
+			/*//se añade esto para depurar
+			echo '<pre>';
+            print_r($results);
+			echo '</pre>';//*/
+			
+			
             $ids=($errors && $_POST['tids'] && is_array($_POST['tids']))?$_POST['tids']:null;
             foreach ($results as $row) {
                 $tag=$row['staff_id']?'assigned':'openticket';
@@ -412,8 +418,10 @@ if ($results) {
                     $tid=sprintf('<b>%s</b>',$tid);
                 }
                 ?>
-            <tr id="<?php echo $row['ticket_id']; ?>">
-                <?php if($thisstaff->canManageTickets()) {
+            	
+                <tr id="<?php echo $row['ticket_id']; ?>">
+                
+				<?php if($thisstaff->canManageTickets()) {
 
                     $sel=false;
                     if($ids && in_array($row['ticket_id'], $ids))
@@ -439,7 +447,19 @@ if ($results) {
                             echo '<i class="icon-fixed-width icon-paperclip"></i>&nbsp;';
                     ?>
                 </td>
-                <!--<td><?php //echo $row['serie']; ?></td>-->
+                <td><?php //script para escribir la serie
+					//la serie tiene que buscarse así por el momento puesto que no forma parte de las tablas normales del ticket
+				    $ticket_id=$row['ticket_id'];
+					$sql="SELECT 
+						t1.value as serie 
+					FROM ost_form_entry_values t1
+					LEFT JOIN ost_form_entry t2 ON (t1.entry_id=t2.id)
+					WHERE t2.object_id=$ticket_id AND t1.field_id=42;";
+					$res2=db_query($sql);
+					$row2=db_fetch_array($res2);
+					echo $row2["serie"];
+				?></td>
+                
                 <td nowrap>&nbsp;<?php echo Format::truncate($row['name'],22,strpos($row['name'],'@')); ?>&nbsp;</td>
                 <?php
                 if($search && !$status){
